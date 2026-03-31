@@ -2,13 +2,29 @@
  * pages/careers/CareersPage.jsx — Version corrigée
  * Fix 1: filtrage par sector fonctionne
  * Fix 2: affichage correct (salary_min/max, title, sector...)
- * Fix 3: lien établissements utilise school_domain (pas undefined)
+ * Fix 3: lien établissements utilise school_domain ou fallback sector
  */
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../lib/api'
 import { Spinner, EmptyState, PageHeader } from '../../components/ui'
 import { TrendingUp, Clock, DollarSign, Star, ChevronRight, Search } from 'lucide-react'
+
+// Mapping sector → domaine scolaire (fallback si school_domain absent)
+const SECTOR_TO_DOMAIN = {
+  'Santé':           'Médecine',
+  'Ingénierie':      'Ingénierie',
+  'Digital':         'Informatique',
+  'Commerce':        'Commerce',
+  'Droit':           'Droit',
+  'Architecture':    'Architecture',
+  'Éducation':       'Sciences',
+  'Militaire':       'Ingénierie',
+  'Entrepreneuriat': 'Commerce',
+  'Sécurité':        'Sciences',
+  'Administration':  'Droit',
+  'International':   'Ingénierie',
+}
 
 const SECTORS = [
   { key: '',               label: 'Tous',           icon: 'apps' },
@@ -53,6 +69,9 @@ const SECTOR_COLORS = {
 
 function CareerCard({ career }) {
   const [expanded, setExpanded] = useState(false)
+
+  // Domaine scolaire : school_domain en priorité, sinon fallback via sector
+  const domain = career.school_domain || SECTOR_TO_DOMAIN[career.sector] || ''
 
   // Formater le salaire
   const salaryText = career.salary_min === 0 && career.salary_max > 0
@@ -168,15 +187,26 @@ function CareerCard({ career }) {
             </div>
           )}
 
-          {/* Lien établissements — utilise school_domain (pas sector) */}
-          <Link
-            to={`/schools?domain=${encodeURIComponent(career.school_domain)}`}
-            className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-secondary-container hover:underline"
-          >
-            <span className="material-symbols-outlined" style={{fontSize:14}}>school</span>
-            Voir les établissements pour cette carrière ({career.schools_count || 0})
-            <ChevronRight size={12}/>
-          </Link>
+          {/* Lien établissements — utilise domain (school_domain ou fallback sector) */}
+          {domain ? (
+            <Link
+              to={`/schools?domain=${encodeURIComponent(domain)}`}
+              className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-secondary-container hover:underline"
+            >
+              <span className="material-symbols-outlined" style={{fontSize:14}}>school</span>
+              Voir les établissements pour cette carrière ({career.schools_count || 0})
+              <ChevronRight size={12}/>
+            </Link>
+          ) : (
+            <Link
+              to="/schools"
+              className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-secondary-container hover:underline"
+            >
+              <span className="material-symbols-outlined" style={{fontSize:14}}>school</span>
+              Voir tous les établissements
+              <ChevronRight size={12}/>
+            </Link>
+          )}
         </div>
       )}
     </div>
@@ -203,7 +233,6 @@ export default function CareersPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Filtrage corrigé — utilise career.sector et career.title
   const filtered = careers.filter(c => {
     const matchSector = !sector || c.sector === sector
     const matchSearch = !search ||
