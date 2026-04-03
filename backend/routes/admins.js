@@ -183,4 +183,27 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+// ── GET /api/admins/premium-stats ────────────────────────────
+// Compte les étudiants qui ont payé le test (is_premium = true)
+router.get('/premium-stats', async (req, res) => {
+  try {
+    const { data: students, error } = await supabase
+      .from('students')
+      .select('profile_data')
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    const premiumCount = (students || []).filter(s => 
+      s.profile_data?.is_premium === true
+    ).length
+
+    res.json({
+      count: premiumCount,
+      revenue: premiumCount * 200,
+    })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch premium stats' })
+  }
+})
+
 module.exports = router;

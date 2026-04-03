@@ -62,8 +62,8 @@ export default function Navbar() {
             <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
               <GraduationCap size={18} className="text-on-primary" />
             </div>
-            <span className="font-headline font-bold text-lg text-primary dark:text-primary-fixed tracking-tight hidden sm:block">
-              Tawjih
+            <span className="font-headline tracking-tight hidden sm:block" style={{fontSize:'20px', letterSpacing:'-0.02em'}}>
+              <span style={{color: '#00342b', fontWeight: 900}} className="dark:text-primary-fixed">ORI</span><span style={{color: '#fdc003', fontWeight: 900}}>MOI</span>
             </span>
           </Link>
 

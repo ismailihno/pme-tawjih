@@ -14,6 +14,8 @@ const BAC_TYPES = [
   { value: 'Lettres',        label: 'Lettres et Sciences Humaines' },
   { value: 'Technique',      label: 'Baccalauréat Technique' },
   { value: 'Arts Appliques', label: 'Arts Appliqués' },
+  { value: 'Economie',       label: 'science de gestion comptable (SGC)' },
+
 ]
 
 const CITIES = ['Casablanca','Rabat','Marrakech','Fès','Tanger','Agadir','Meknès','Oujda','Tétouan','Safi','Settat','Kénitra','Autre']

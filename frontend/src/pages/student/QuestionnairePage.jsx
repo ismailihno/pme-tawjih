@@ -38,9 +38,10 @@ const STEPS = [
       { value: 'biologie',     label: 'Biologie / SVT',     icon: 'biotech' },
       { value: 'informatique', label: 'Informatique',       icon: 'code' },
       { value: 'économie',     label: 'Économie / Gestion', icon: 'bar_chart' },
-      { value: 'français',     label: 'Langue française',   icon: 'translate' },
+      { value: 'français',     label: 'Les Langues',   icon: 'translate' },
       { value: 'histoire',     label: 'Histoire / Géo',     icon: 'public' },
       { value: 'philosophie',  label: 'Philosophie',        icon: 'psychology' },
+      { value: 'arts',          label: 'Arts & Expression',  icon: 'palette' },
     ],
   },
   {
@@ -68,6 +69,7 @@ const STEPS = [
       { value: 'Commerce',     label: 'Commerce & Gestion',   icon: 'storefront' },
       { value: 'Droit',        label: 'Droit & Sciences Po',  icon: 'gavel' },
       { value: 'Ingénierie',   label: 'Ingénierie',           icon: 'engineering' },
+      { value: 'Arts',         label: 'Arts & Design',         icon: 'palette' },
       { value: 'nsp',          label: 'Je ne sais pas encore', icon: 'help' },
     ],
   },
@@ -257,7 +259,7 @@ function Paywall({ onPaid }) {
 
         <div className="space-y-3 text-center">
           <div className="flex items-center justify-center gap-3">
-            <span className="font-headline font-extrabold text-5xl text-primary dark:text-primary-fixed">29</span>
+            <span className="font-headline font-extrabold text-5xl text-primary dark:text-primary-fixed">200</span>
             <div className="text-left">
               <p className="font-semibold text-on-surface dark:text-white/80">MAD</p>
               <p className="text-xs text-on-surface-variant dark:text-white/40">paiement unique</p>
@@ -277,8 +279,8 @@ function Paywall({ onPaid }) {
       <PaymentModal
         open={showPayment}
         onClose={() => setShowPayment(false)}
-        amount={29}
-        description="Test d'orientation complet — Tawjih (15 questions)"
+        amount={200}
+        description="Test d'orientation complet — ORIMOI (15 questions)"
         onSuccess={handleSuccess}
       />
     </div>

@@ -127,24 +127,17 @@ export default function ResultsPage() {
           {results.length > 0 ? (
             results.map((result, i) => (
               <div key={result.field} className="animate-fade-up">
-                <OrientationCard
-                  result={result}
-                  rank={i + 1}
-                  showExplanation={i === 0}
-                />
+                <div className="relative">
+                  <OrientationCard
+                    result={result}
+                    rank={i + 1}
+                    showExplanation={i === 0}
+                  />
+                  <div>
+                  </div>
+                </div>
                 {/* Related schools CTA for top result */}
-                {i === 0 && (
-                  <Link
-                    to={`/schools?domain=${result.field}`}
-                    className="flex items-center gap-3 mt-3 p-4 bg-surface-container-low dark:bg-white/5 rounded-2xl hover:bg-surface-container dark:hover:bg-white/10 transition-colors group"
-                  >
-                    <School size={18} className="text-primary dark:text-primary-fixed shrink-0" />
-                    <span className="text-sm font-semibold text-on-surface dark:text-white/80 flex-1">
-                      Voir les établissements en {result.field}
-                    </span>
-                    <ArrowRight size={16} className="text-on-surface-variant dark:text-white/30 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                )}
+                
               </div>
             ))
           ) : top_recommendation ? (

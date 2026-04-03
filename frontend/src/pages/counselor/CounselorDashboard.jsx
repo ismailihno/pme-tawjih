@@ -97,7 +97,7 @@ function SubscriptionWall({ onActivated, userId }) {
         </div>
         <div className="grid grid-cols-3 gap-4 text-center">
           {[
-            { n:'1', icon:'credit_card',  title:'Abonnez-vous',         desc:'99 MAD/mois' },
+            { n:'1', icon:'credit_card',  title:'Abonnez-vous',         desc:'150 MAD/mois' },
             { n:'2', icon:'campaign',     title:'Créez une annonce',    desc:'Établissement + prix + places' },
             { n:'3', icon:'group',        title:'Recevez des inscrits', desc:'80% de chaque paiement' },
           ].map(s => (
@@ -126,7 +126,7 @@ function SubscriptionWall({ onActivated, userId }) {
         {error && <div className="bg-error-container text-on-error-container rounded-2xl p-3 text-sm">{error}</div>}
         <div className="space-y-3">
           <div className="flex items-center justify-center gap-3">
-            <span className="font-headline font-extrabold text-5xl text-primary dark:text-primary-fixed">99</span>
+            <span className="font-headline font-extrabold text-5xl text-primary dark:text-primary-fixed">150</span>
             <div className="text-left">
               <p className="font-semibold text-on-surface dark:text-white/80">MAD / mois</p>
               <p className="text-xs text-on-surface-variant dark:text-white/40">Résiliable à tout moment</p>
@@ -139,7 +139,7 @@ function SubscriptionWall({ onActivated, userId }) {
         </div>
       </div>
       <PaymentModal open={showPayment} onClose={() => setShowPayment(false)}
-        amount={99} description="Abonnement Conseiller Tawjih — 1 mois"
+        amount={150} description="Abonnement Conseiller Tawjih — 1 mois"
         onSuccess={handleSuccess}/>
     </div>
   )

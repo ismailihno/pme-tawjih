@@ -62,6 +62,7 @@ async function runOrientationAlgorithm(answers, bacType) {
       'Commerce': ['économie', 'gestion', 'comptabilité', 'mathematiques'],
       'Droit': ['français', 'histoire', 'philosophie', 'langue'],
       'Ingénierie': ['math', 'physique', 'technologie', 'mécanique'],
+      'Arts': ['arts', 'dessin', 'musique', 'expression', 'créativité', 'esthétique'],
     };
 
     const subjects = answers.favorite_subjects || [];
@@ -70,6 +71,19 @@ async function runOrientationAlgorithm(answers, bacType) {
       if (fieldSubjects.some(fs => sub.toLowerCase().includes(fs))) {
         score += 15;
       }
+    }
+
+    // Score 5: Arts detection spécifique
+    if (config.field === 'Arts') {
+      const interests = answers.interests || [];
+      const skills = answers.skills || [];
+      const bacStrength = answers.bac_strength || '';
+      
+      if (interests.includes('art')) score += 25;
+      if (skills.includes('créativité')) score += 20;
+      if (bacStrength === 'arts') score += 30;
+      if (answers.preferred_field === 'Arts') score += 30;
+      if (allAnswerText.includes('art') || allAnswerText.includes('design') || allAnswerText.includes('créat')) score += 10;
     }
 
     // Apply weight multiplier
