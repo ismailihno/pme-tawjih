@@ -135,6 +135,7 @@ const STEPS = [
       { value: 'industrie',      label: 'Industrie & Manufacture',       icon: 'factory' },
       { value: 'juridique',      label: 'Juridique & Gouvernement',      icon: 'gavel' },
       { value: 'education',      label: 'Éducation & Recherche',         icon: 'school' },
+      { value: 'arts_design',    label: 'Arts & Design & Création',     icon: 'palette' },
     ],
   },
   {
