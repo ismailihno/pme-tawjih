@@ -1,7 +1,3 @@
-/**
- * server.js — Tawjih Backend Entry Point
- */
-
 require('dotenv').config();
 const express   = require('express');
 const cors      = require('cors');
@@ -23,8 +19,23 @@ const careerRoutes          = require('./routes/careers');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'https://pme-tawjih.vercel.app',
+].filter(Boolean);
+
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -49,5 +60,9 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => console.log(`✅ Tawjih API running at http://localhost:${PORT}`));
+// ✅ Fix clé : ne pas appeler listen() sur Vercel
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`✅ Tawjih API running at http://localhost:${PORT}`));
+}
+
 module.exports = app;
