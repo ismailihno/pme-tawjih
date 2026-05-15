@@ -2,6 +2,9 @@
  * routes/announcements.js
  * FIX FINAL : le JOIN counselors utilise user_id (pas counselor_id)
  * car la table counselors a une FK sur users.id via user_id
+ *
+ * MODIFICATION : Ajout de la route POST /:id/report
+ * pour signaler une annonce → visible dans le panneau admin
  */
 
 const router  = require('express').Router();
@@ -21,8 +24,6 @@ router.get('/', async (req, res) => {
     const { school_id, search, page = 1, limit = 12 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Requête SANS le JOIN counselors qui cause le 500
-    // On récupère les annonces + école + user du conseiller
     let query = supabase
       .from('announcements')
       .select(`
@@ -44,7 +45,6 @@ router.get('/', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    // Enrichir avec les données counselor séparément (évite le JOIN problématique)
     const enriched = await Promise.all((data || []).map(async (ann) => {
       const { data: counselor } = await supabase
         .from('counselors')
@@ -92,7 +92,6 @@ router.get('/:id', async (req, res) => {
 
     if (error || !data) return res.status(404).json({ error: 'Annonce non trouvée' });
 
-    // Récupérer le profil counselor séparément
     const { data: counselor } = await supabase
       .from('counselors')
       .select('bio, specialties, rating, total_reviews, is_verified')
@@ -101,6 +100,64 @@ router.get('/:id', async (req, res) => {
 
     res.json({ announcement: { ...data, counselors: counselor || null } });
   } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/announcements/:id/report ───────────────────────
+// MODIFICATION : Signaler une annonce — enregistré dans announcement_reports
+// et visible depuis le panneau admin (GET /api/admins/reports)
+router.post('/:id/report', requireAuth, async (req, res) => {
+  const { cause, comment } = req.body;
+
+  if (!cause || !comment || comment.trim().length < 5) {
+    return res.status(400).json({ error: 'La cause et un commentaire sont requis.' });
+  }
+
+  try {
+    // Vérifier que l'annonce existe
+    const { data: ann } = await supabase
+      .from('announcements')
+      .select('id, title, counselor_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+
+    if (!ann) return res.status(404).json({ error: 'Annonce introuvable.' });
+
+    // Vérifier que l'étudiant n'a pas déjà signalé cette annonce
+    const { data: existing } = await supabase
+      .from('announcement_reports')
+      .select('id')
+      .eq('announcement_id', req.params.id)
+      .eq('reporter_id', req.user.id)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(409).json({ error: 'Vous avez déjà signalé cette annonce.' });
+    }
+
+    // Insérer le signalement
+    const { data: report, error: insertError } = await supabase
+      .from('announcement_reports')
+      .insert({
+        announcement_id: req.params.id,
+        reporter_id:     req.user.id,
+        counselor_id:    ann.counselor_id,
+        cause,
+        comment:         comment.trim(),
+        status:          'pending',
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Report insert error:', insertError);
+      return res.status(500).json({ error: insertError.message });
+    }
+
+    res.status(201).json({ report, message: 'Signalement envoyé à l\'administration.' });
+  } catch (err) {
+    console.error('Report route error:', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -116,9 +173,9 @@ router.post('/', requireAuth, requireCounselor, async (req, res) => {
       .insert({
         counselor_id: req.user.id,
         title, description, price,
-        school_id: school_id || null,
+        school_id:    school_id || null,
         max_students: max_students || 10,
-        deadline: deadline || null,
+        deadline:     deadline || null,
       })
       .select()
       .single();

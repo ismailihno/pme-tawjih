@@ -101,7 +101,7 @@ function CareerCard({ career }) {
           </div>
         </div>
         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${DIFFICULTY_COLORS[career.difficulty] || DIFFICULTY_COLORS['moyenne']}`}>
-          {career.difficulty}
+        Difficulté :  {career.difficulty}
         </span>
       </div>
 

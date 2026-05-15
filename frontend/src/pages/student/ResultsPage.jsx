@@ -1,6 +1,10 @@
 /**
  * pages/student/ResultsPage.jsx
  * Displays orientation algorithm results with save functionality.
+ *
+ * MODIFICATION : Ajout d'une section "Contactez un conseiller" avec des
+ * informations fixes (statiques) — mêmes infos pour tous les étudiants,
+ * aucun appel API supplémentaire.
  */
 
 import { useState, useEffect } from 'react'
@@ -8,18 +12,62 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import api from '../../lib/api'
 import { Button, Spinner, EmptyState } from '../../components/ui'
 import OrientationCard from '../../components/orientation/OrientationCard'
-import { Save, RotateCcw, ArrowRight, School } from 'lucide-react'
+import { Save, RotateCcw, ArrowRight, Phone, Mail, Star } from 'lucide-react'
+
+// ── Conseillers statiques ─────────────────────────────────────
+// MODIFICATION : informations fixes affichées pour tous les étudiants
+const STATIC_COUNSELORS = [
+  {
+    id: 1,
+    name: 'Dr. Fatima Zahra Benali',
+    title: 'Conseillère d\'orientation certifiée',
+    specialties: ['Sciences', 'Médecine', 'Ingénierie'],
+    email: 'f.benali@orimoi.ma',
+    phone: '+212 6 12 34 56 78',
+    rating: 4.9,
+    bio: 'Spécialiste en orientation post-bac avec 10 ans d\'expérience. Accompagne les étudiants vers les filières scientifiques et médicales.',
+  },
+  {
+    id: 2,
+    name: 'M. Youssef El Amrani',
+    title: 'Conseiller d\'orientation & coach carrière',
+    specialties: ['Commerce', 'Management', 'Finance'],
+    email: 'y.elamrani@orimoi.ma',
+    phone: '+212 6 98 76 54 32',
+    rating: 4.8,
+    bio: 'Expert en orientation vers les grandes écoles de commerce et les filières économiques au Maroc et à l\'international.',
+  },
+  {
+    id: 3,
+    name: 'Mme. Sara Idrissi',
+    title: 'Conseillère en orientation scolaire',
+    specialties: ['Droit', 'Sciences humaines', 'Arts'],
+    email: 's.idrissi@orimoi.ma',
+    phone: '+212 6 55 44 33 22',
+    rating: 4.7,
+    bio: 'Accompagne les lycéens et bacheliers dans le choix de leur filière en sciences humaines, droit et arts.',
+  },
+  {
+    id: 4,
+    name: 'M. Karim Tazi',
+    title: 'Conseiller d\'orientation & mentor',
+    specialties: ['Informatique', 'Technologie', 'Numérique'],
+    email: 'k.tazi@orimoi.ma',
+    phone: '+212 6 77 88 99 00',
+    rating: 4.6,
+    bio: 'Passionné par le numérique, guide les étudiants vers les meilleures écoles d\'informatique et d\'ingénierie au Maroc.',
+  },
+]
 
 export default function ResultsPage() {
-  const location               = useLocation()
-  const navigate               = useNavigate()
-  const [data, setData]        = useState(location.state?.results || null)
-  const [saved, setSaved]      = useState(false)
-  const [saving, setSaving]    = useState(false)
-  const [history, setHistory]  = useState([])
-  const [loading, setLoading]  = useState(!location.state?.results)
+  const location              = useLocation()
+  const navigate              = useNavigate()
+  const [data, setData]       = useState(location.state?.results || null)
+  const [saved, setSaved]     = useState(false)
+  const [saving, setSaving]   = useState(false)
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(!location.state?.results)
 
-  // If no state (direct navigation), load last result from API
   useEffect(() => {
     if (!data) {
       api.get('/orientation/results').then(res => {
@@ -40,7 +88,6 @@ export default function ResultsPage() {
         setHistory(results.slice(1, 5))
       }).finally(() => setLoading(false))
     } else {
-      // Load history separately
       api.get('/orientation/results').then(res => {
         setHistory((res.data.results || []).slice(1, 5))
       })
@@ -127,23 +174,88 @@ export default function ResultsPage() {
           {results.length > 0 ? (
             results.map((result, i) => (
               <div key={result.field} className="animate-fade-up">
-                <div className="relative">
-                  <OrientationCard
-                    result={result}
-                    rank={i + 1}
-                    showExplanation={i === 0}
-                  />
-                  <div>
-                  </div>
-                </div>
-                {/* Related schools CTA for top result */}
-                
+                <OrientationCard result={result} rank={i + 1} showExplanation={i === 0} />
               </div>
             ))
           ) : top_recommendation ? (
             <OrientationCard result={top_recommendation} rank={1} showExplanation />
           ) : null}
         </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            MODIFICATION : Section conseillers — données statiques
+            Les mêmes 4 conseillers sont affichés pour tous les étudiants.
+        ════════════════════════════════════════════════════════ */}
+        <div className="space-y-5 animate-fade-up">
+          <div className="text-center space-y-1">
+            <p className="section-label">Besoin d'aide ?</p>
+            <h2 className="font-headline font-bold text-2xl text-on-surface dark:text-white/90">
+              Consultez un conseiller d'orientation
+            </h2>
+            <p className="text-on-surface-variant dark:text-white/50 text-sm max-w-md mx-auto">
+              Nos conseillers certifiés sont disponibles pour vous aider à interpréter
+              vos résultats et choisir la meilleure filière pour votre avenir.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {STATIC_COUNSELORS.map(counselor => (
+              <div
+                key={counselor.id}
+                className="bg-surface-container-lowest dark:bg-dark-surface-container rounded-2xl shadow-ambient p-5 space-y-4 hover:shadow-md transition-shadow"
+              >
+                {/* En-tête */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary-fixed/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary dark:text-primary-fixed icon-md">person</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-on-surface dark:text-white/90 truncate">{counselor.name}</p>
+                    <p className="text-xs text-on-surface-variant dark:text-white/50 truncate">{counselor.title}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Star size={11} className="text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs text-on-surface-variant dark:text-white/50">{counselor.rating} / 5</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <p className="text-xs text-on-surface-variant dark:text-white/50 line-clamp-2">{counselor.bio}</p>
+
+                {/* Spécialités */}
+                <div className="flex flex-wrap gap-1.5">
+                  {counselor.specialties.map((s, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-2 py-0.5 rounded-full bg-secondary-container/30 dark:bg-secondary-container/20 text-on-surface-variant dark:text-white/60"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Boutons contact */}
+                <div className="flex gap-2 pt-1">
+                  <a
+                    href={`mailto:${counselor.email}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl bg-primary/10 dark:bg-primary-fixed/10 text-primary dark:text-primary-fixed hover:bg-primary/20 dark:hover:bg-primary-fixed/20 transition-colors"
+                  >
+                    <Mail size={13} />
+                    Email
+                  </a>
+                  <a
+                    href={`tel:${counselor.phone}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl bg-secondary-container/40 dark:bg-secondary-container/20 text-on-surface dark:text-white/80 hover:bg-secondary-container/60 transition-colors"
+                  >
+                    <Phone size={13} />
+                    Appeler
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* ═══════════════════ FIN MODIFICATION ═══════════════════ */}
 
         {/* History */}
         {history.length > 0 && (
@@ -158,7 +270,7 @@ export default function ResultsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-on-surface dark:text-white/80">{h.suggested_field}</p>
                     <p className="text-xs text-on-surface-variant dark:text-white/40">
-                      {new Date(h.created_at).toLocaleDateString('fr-MA', { day:'numeric', month:'long', year:'numeric' })}
+                      {new Date(h.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
                   <div className="text-right">
@@ -179,9 +291,9 @@ export default function ResultsPage() {
           <h3 className="font-headline font-bold text-xl">Prochaines étapes</h3>
           <div className="space-y-3">
             {[
-              { icon: 'school', text: 'Explorez les établissements correspondant à votre filière' },
-              { icon: 'book', text: 'Renseignez-vous sur les conditions d\'admission' },
-              { icon: 'event', text: 'Participez aux journées portes ouvertes' },
+              { icon: 'school', text: "Explorez les établissements correspondant à votre filière" },
+              { icon: 'book',   text: "Renseignez-vous sur les conditions d'admission" },
+              { icon: 'event',  text: "Participez aux journées portes ouvertes" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
@@ -198,6 +310,7 @@ export default function ResultsPage() {
             Explorer les établissements <ArrowRight size={16} />
           </Link>
         </div>
+
       </div>
     </div>
   )

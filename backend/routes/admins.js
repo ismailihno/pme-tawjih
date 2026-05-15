@@ -1,17 +1,19 @@
 /**
  * routes/admins.js
  * Admin-only routes: user management, stats, and admin creation.
+ *
+ * MODIFICATION : Ajout de 2 routes pour les signalements d'annonces :
+ *  - GET  /api/admins/reports        → liste tous les signalements
+ *  - PATCH /api/admins/reports/:id   → résoudre ou ignorer un signalement
  */
 
 const router = require('express').Router();
 const supabase = require('../config/supabase');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-// All routes require admin
 router.use(requireAuth, requireAdmin);
 
 // ── GET /api/admins/stats ─────────────────────────────────────
-// Dashboard statistics
 router.get('/stats', async (req, res) => {
   try {
     const [
@@ -30,7 +32,6 @@ router.get('/stats', async (req, res) => {
       supabase.from('orientations').select('created_at, suggested_field').order('created_at', { ascending: false }).limit(5),
     ]);
 
-    // Aggregate popular fields
     const fieldCounts = {};
     (popularFields || []).forEach(o => {
       fieldCounts[o.suggested_field] = (fieldCounts[o.suggested_field] || 0) + 1;
@@ -56,7 +57,6 @@ router.get('/stats', async (req, res) => {
 });
 
 // ── GET /api/admins/users ─────────────────────────────────────
-// List all users with pagination
 router.get('/users', async (req, res) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
@@ -71,11 +71,10 @@ router.get('/users', async (req, res) => {
       .range(offset, offset + parseInt(limit) - 1)
       .order('created_at', { ascending: false });
 
-    if (role) query = query.eq('role', role);
+    if (role)   query = query.eq('role', role);
     if (search) query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
 
     const { data, error, count } = await query;
-
     if (error) return res.status(500).json({ error: error.message });
 
     res.json({ users: data, total: count, page: parseInt(page) });
@@ -85,12 +84,10 @@ router.get('/users', async (req, res) => {
 });
 
 // ── PUT /api/admins/users/:id ─────────────────────────────────
-// Update user: suspend, change role, etc.
 router.put('/users/:id', async (req, res) => {
   const { id } = req.params;
   const { is_active, role, full_name } = req.body;
 
-  // Prevent admin from suspending themselves
   if (id === req.user.id && is_active === false) {
     return res.status(400).json({ error: 'Cannot suspend your own account' });
   }
@@ -101,14 +98,9 @@ router.put('/users/:id', async (req, res) => {
     if (role && ['student', 'admin'].includes(role)) updates.role = role;
     if (full_name) updates.full_name = full_name;
 
-    const { error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', id);
-
+    const { error } = await supabase.from('users').update(updates).eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
 
-    // If promoting to admin, create admins record
     if (role === 'admin') {
       await supabase.from('admins').upsert({ user_id: id }, { onConflict: 'user_id' });
     }
@@ -120,35 +112,20 @@ router.put('/users/:id', async (req, res) => {
 });
 
 // ── POST /api/admins/create ───────────────────────────────────
-// Create a new admin account directly
 router.post('/create', async (req, res) => {
   const { email, password, full_name, permissions } = req.body;
-
   if (!email || !password || !full_name) {
     return res.status(400).json({ error: 'email, password, full_name required' });
   }
 
   try {
-    // Create Supabase Auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
+      email, password, email_confirm: true,
     });
-
     if (authError) return res.status(400).json({ error: authError.message });
 
     const userId = authData.user.id;
-
-    // Insert into users table as admin
-    await supabase.from('users').insert({
-      id: userId,
-      email,
-      full_name,
-      role: 'admin',
-    });
-
-    // Insert into admins table
+    await supabase.from('users').insert({ id: userId, email, full_name, role: 'admin' });
     await supabase.from('admins').insert({
       user_id: userId,
       permissions: permissions || { manage_schools: true, manage_users: true, manage_admins: false },
@@ -161,49 +138,101 @@ router.post('/create', async (req, res) => {
 });
 
 // ── DELETE /api/admins/users/:id ──────────────────────────────
-// Deactivate a user account
 router.delete('/users/:id', async (req, res) => {
   const { id } = req.params;
-
   if (id === req.user.id) {
     return res.status(400).json({ error: 'Cannot deactivate your own account' });
   }
-
   try {
-    const { error } = await supabase
-      .from('users')
-      .update({ is_active: false })
-      .eq('id', id);
-
+    const { error } = await supabase.from('users').update({ is_active: false }).eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
-
     res.json({ message: 'Account deactivated' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to deactivate account' });
   }
 });
 
-// ── GET /api/admins/premium-stats ────────────────────────────
-// Compte les étudiants qui ont payé le test (is_premium = true)
+// ── GET /api/admins/premium-stats ─────────────────────────────
 router.get('/premium-stats', async (req, res) => {
   try {
-    const { data: students, error } = await supabase
-      .from('students')
-      .select('profile_data')
+    const { data: students, error } = await supabase.from('students').select('profile_data');
+    if (error) return res.status(500).json({ error: error.message });
 
-    if (error) return res.status(500).json({ error: error.message })
-
-    const premiumCount = (students || []).filter(s => 
-      s.profile_data?.is_premium === true
-    ).length
-
-    res.json({
-      count: premiumCount,
-      revenue: premiumCount * 200,
-    })
+    const premiumCount = (students || []).filter(s => s.profile_data?.is_premium === true).length;
+    res.json({ count: premiumCount, revenue: premiumCount * 200 });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch premium stats' })
+    res.status(500).json({ error: 'Failed to fetch premium stats' });
   }
-})
+});
+
+// ── GET /api/admins/reports ───────────────────────────────────
+// MODIFICATION : Liste tous les signalements d'annonces
+router.get('/reports', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('announcement_reports')
+      .select(`
+        id, cause, comment, status, admin_note, created_at,
+        announcements (
+          id, title,
+          users!announcements_counselor_id_fkey (full_name, email)
+        ),
+        users!announcement_reports_reporter_id_fkey (full_name, email)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Reports fetch error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    // Reformater pour que le frontend accède facilement aux données
+    const reports = (data || []).map(r => ({
+      id:         r.id,
+      cause:      r.cause,
+      comment:    r.comment,
+      status:     r.status,
+      admin_note: r.admin_note,
+      created_at: r.created_at,
+      announcements: r.announcements
+        ? { title: r.announcements.title, users: r.announcements.users }
+        : null,
+      users: r.users, // reporter
+    }));
+
+    res.json({ reports });
+  } catch (err) {
+    console.error('Reports error:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PATCH /api/admins/reports/:id ────────────────────────────
+// MODIFICATION : Résoudre ou ignorer un signalement
+router.patch('/reports/:id', async (req, res) => {
+  const { status, admin_note } = req.body;
+
+  if (!['resolved', 'dismissed'].includes(status)) {
+    return res.status(400).json({ error: 'status doit être "resolved" ou "dismissed"' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('announcement_reports')
+      .update({ status, admin_note: admin_note || null })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Report update error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ report: data, message: 'Signalement mis à jour.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 module.exports = router;

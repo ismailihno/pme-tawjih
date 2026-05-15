@@ -186,6 +186,8 @@ const STEPS = [
       { value: 'grande_ecole', label: 'Grande école (concours)',      icon: 'emoji_events' },
       { value: 'universite',  label: 'Université (inscription libre)', icon: 'menu_book' },
       { value: 'peu_importe', label: 'Peu importe',                   icon: 'help' },
+      { value: 'semipublic',      label: 'Semi Public',              icon: 'compare_arrows' },
+
     ],
   },
   {

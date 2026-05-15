@@ -1,6 +1,7 @@
 /**
  * pages/admin/AdminSchools.jsx
  * Full CRUD for schools — add, edit, delete.
+ * MODIFICATION : liste complète des villes du Maroc dans le formulaire
  */
 
 import { useState, useEffect } from 'react'
@@ -10,7 +11,29 @@ import { Input, Select, Textarea, Button, Badge, Spinner, Modal, Alert, EmptySta
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 
 const DOMAINS = ['Informatique','Médecine','Commerce','Droit','Ingénierie','Sciences','Architecture','Arts','Communication','Tourisme']
-const CITIES  = ['Casablanca','Rabat','Marrakech','Fès','Tanger','Agadir','Meknès','Oujda','Tétouan','Safi','Kenitra','Beni Mellal']
+
+// MODIFICATION : toutes les villes du Maroc
+const CITIES = [
+  'Agadir','Aït Melloul','Al Hoceïma','Azemmour','Azrou',
+  'Beni Mellal','Benguerir','Berkane','Berrechid','Boujdour','Bouskoura',
+  'Casablanca','Chefchaouen',
+  'Dakhla',
+  'El Jadida','El Kelaa des Sraghna','Errachidia','Essaouira',
+  'Fès','Figuig','Fnideq',
+  'Guelmim',
+  'Ifrane','Inezgane',
+  'Kénitra','Khémisset','Khénifra','Khouribga',
+  'Laâyoune','Larache',
+  'Marrakech','Martil','Meknès','Midelt','Mohammedia',
+  'Nador',
+  'Ouarzazate','Oued Zem','Oujda',
+  'Rabat',
+  'Safi','Salé','Sefrou','Settat','Sidi Kacem','Sidi Slimane','Skhirat',
+  'Tan-Tan','Tanger','Taounate','Taroudant','Taza','Tétouan','Tiznit',
+  'Youssoufia',
+  'Zagora',
+]
+
 const TYPES   = [{ value:'public',label:'Public' },{ value:'private',label:'Privé' },{ value:'semipublic',label:'Semi-public' }]
 
 const EMPTY_FORM = { name:'',city:'',domain:'',type:'public',description:'',admission_info:'',duration:'',website:'' }
@@ -146,7 +169,8 @@ export default function AdminSchools() {
           <Alert type={feedback.type} message={feedback.msg} />
           <Input label="Nom de l'établissement *" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="ENSA Agadir" required />
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Ville *" options={CITIES.map(c=>({value:c,label:c}))} placeholder="Choisir..." value={form.city} onChange={e=>set('city',e.target.value)} />
+            {/* MODIFICATION : Select ville avec toutes les villes du Maroc */}
+            <Select label="Ville *" options={CITIES.map(c=>({value:c,label:c}))} placeholder="Choisir une ville..." value={form.city} onChange={e=>set('city',e.target.value)} />
             <Select label="Domaine *" options={DOMAINS.map(d=>({value:d,label:d}))} placeholder="Choisir..." value={form.domain} onChange={e=>set('domain',e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
